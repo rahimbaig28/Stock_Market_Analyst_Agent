@@ -88,10 +88,11 @@ Return in structured format:
 Data:
 {{stock_data}}
 ---
+```
+
 
 ✔ Runs every day at 9:00 AM automatically.
 
----
 
 4. Enable Workflow
 

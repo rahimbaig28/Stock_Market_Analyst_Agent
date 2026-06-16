@@ -1,0 +1,154 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        384,
+        0
+      ],
+      "id": "ea02e7ed-5c5d-40ed-b226-2e21f743919d",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "You are a stock market analyst.\n\nGenerate a list of the 10 most promising US stocks for today based on current AI, tech, healthcare, and financial trends.\n\nDo NOT ask for input.\n\nReturn exactly 10 stocks.\n\nFor each stock provide:\n- Symbol\n- Reason it is interesting\n- Risk Level\n- Short-term outlook\n\nFormat as a clean email in HTML."
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        592,
+        0
+      ],
+      "id": "4220be39-fb8d-4908-ab9e-b4c0516cf302",
+      "name": "Message a model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "qzeP1CCUofzDjhl1",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "rahimbaig00332211@gmail.com, ahmedsyed1266@gmail.com",
+        "subject": "Your Daily Top 10 Stocks",
+        "message": "={{ $json.html }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1104,
+        0
+      ],
+      "id": "20534d11-f48f-4e55-babc-465ba003645c",
+      "name": "Send a message",
+      "webhookId": "7cb4e663-8cad-4ad9-9da0-5b79992300ed",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "324ZXxI3MGwZzcyT",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e7773651-04fc-4026-9f91-b11391ff0426",
+              "name": "html",
+              "value": "={{ $json.content.parts[0].text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        944,
+        0
+      ],
+      "id": "111b28db-be41-44d4-bf61-64e710633500",
+      "name": "Edit Fields"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "ac7a29a9-28b6-4c83-b561-3d228788ed52",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ff49076e2580c7c5ff88ae4cb3ad89d781172625e17f4da6f18b2c00e85d66a8"
+  },
+  "nodeGroups": [],
+  "id": "FUTaHY7DYKgzP0KW",
+  "tags": []
+}

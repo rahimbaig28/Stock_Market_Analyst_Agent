@@ -1,0 +1,162 @@
+{
+  "name": "My workflow 2",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "value": "137cZARriRD412B0c3-YNvUXKLVYCrd17",
+          "mode": "list",
+          "cachedResultName": "CPAC Flyer Dropzone",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/137cZARriRD412B0c3-YNvUXKLVYCrd17"
+        },
+        "event": "fileCreated",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "b5c3f57a-380d-4b11-b445-bffd4027b5d1",
+      "name": "Google Drive Trigger",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "4X9cd5sBjZEOqyA9",
+          "name": "Google Drive OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-pro",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-pro"
+        },
+        "text": "Look at this event flyer image. Read all text carefully, find the event details, and format them strictly as a raw JSON object using the following keys. Do not include markdown code block formatting (like ```json), just return the pure, clean JSON string text:\n\n{\n  \"title\": \"Exact title of the event\",\n  \"start_date\": \"YYYY-MM-DD\",\n  \"start_time\": \"HH:MM\",\n  \"end_date\": \"YYYY-MM-DD\",\n  \"end_time\": \"HH:MM (If not mentioned, default to 1 hour after start)\",\n  \"location\": \"Full address or 'Virtual/Online'\",\n  \"description\": \"A concise 2-sentence summary of the event text\"\n}\n\nRule: If a calendar year is missing from the flyer, assume it takes place in 2026. Keep dates strictly in YYYY-MM-DD format.",
+        "inputType": "binary",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "ee3b61a6-44f5-4467-b178-40463f6207ab",
+      "name": "Analyze an image",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "hWwd9w1SkHKbYum8",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.cpacsj.org/_functions/createEvent",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ \n  (() => {\n    // 1. Grab raw text, safely digging into the nested content.parts structure shown in image_43629d.png\n    const rawData = $json.content?.parts?.[0]?.text || $json.text || $json.output || $json.message?.content;\n    \n    if (!rawData) {\n      throw new Error(\"No text data found from Gemini node.\");\n    }\n    \n    // 2. Extract ONLY the clean JSON object ignoring any markdown tags or text around it\n    const jsonMatch = rawData.match(/\\{[\\s\\S]*\\}/);\n    if (!jsonMatch) {\n      throw new Error(\"Could not find a valid JSON object in Gemini's response.\");\n    }\n    \n    return JSON.parse(jsonMatch[0]);\n  })()\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        624,
+        0
+      ],
+      "id": "ec83e58b-a6fb-4acc-b392-dd40dbce3ad9",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        208,
+        0
+      ],
+      "id": "7b3b626a-bec3-47b3-b4c1-255d21f2224c",
+      "name": "Download file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "4X9cd5sBjZEOqyA9",
+          "name": "Google Drive OAuth2 API"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Drive Trigger": {
+      "main": [
+        [
+          {
+            "node": "Download file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze an image": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file": {
+      "main": [
+        [
+          {
+            "node": "Analyze an image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "5bb2af7b-f516-42a8-bf63-10d2ed43d2f4",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ff49076e2580c7c5ff88ae4cb3ad89d781172625e17f4da6f18b2c00e85d66a8"
+  },
+  "nodeGroups": [],
+  "id": "RqrC53lLvukZUsRO",
+  "tags": []
+}
